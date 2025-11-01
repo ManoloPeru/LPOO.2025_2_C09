@@ -273,6 +273,8 @@ namespace SGELProdAutomView {
 			if (this->comboBoxMaquinas->Items->Count > 0) {
 				this->comboBoxMaquinas->SelectedIndex = 0;
 			}
+
+			RestablecerValoresPorDefecto();
 		}
 
 			   void FormGraficosRendimiento::pictureBoxGrafico_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e)
