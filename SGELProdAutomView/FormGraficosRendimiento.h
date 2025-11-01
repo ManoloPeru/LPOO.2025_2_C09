@@ -1,4 +1,7 @@
 ﻿#pragma once
+#include "GraphicsHelper.h"
+#include "ExportHelper.h"
+#include "ValidationHelper.h"
 
 namespace SGELProdAutomView {
 
@@ -433,158 +436,92 @@ namespace SGELProdAutomView {
 
 private: System::Void buttonGraficar_Click(System::Object^ sender, System::EventArgs^ e) {
 	try {
-		// Validar y obtener parámetros
+		// Validación
+		if (!ValidarEntrada()) return;
+
+		// Obtener datos
 		double k = Double::Parse(textBoxK->Text);
 		double x0 = Double::Parse(textBoxX0->Text);
-		
+		Maquina^ maquina = safe_cast<Maquina^>(comboBoxMaquinas->SelectedItem);
 
-		if (k <= 0 || x0 <= 0) {
-			MessageBox::Show("Los valores de k y x₀ deben ser mayores que cero.",
-				"Error de Validación", MessageBoxButtons::OK, MessageBoxIcon::Warning);
-			return;
-		}
-		
-		if (this->comboBoxMaquinas->SelectedItem == nullptr) {
-			MessageBox::Show("Debe seleccionar una Máquina.",
-				"Error de Validación", MessageBoxButtons::OK, MessageBoxIcon::Warning);
-			return;
-		}
-		Maquina^ maquina = dynamic_cast<Maquina^>(comboBoxMaquinas->SelectedItem);
-		int idMaquina = maquina->getIdMaquina();
-		String^ maquinaSeleccionada = maquina->getNombre();
+		// Generar modelo
+		RendimientoSigmoide^ modelo = GenerarModeloSigmoide(k, x0);
 
-		// Crear y configurar el modelo sigmoide con rango más amplio
-		RendimientoSigmoide^ modelo = this->rendimientoController->CrearModeloPersonalizado(k, x0);
+		// Dibujar gráfico
+		DibujarGrafico(modelo);
 
-		// Generar puntos en un rango que muestre bien la curva
-		// Si x0 es 50, generar de 0 a 2*x0 para ver la curva completa
-		double xMax = Math::Max(100.0, x0 * 2.5); // Mínimo 100, máximo 2.5*x0
-		modelo->GenerarPuntos(0, xMax, xMax / 100.0); // Incremento dinámico
+		// Mostrar resultados
+		MostrarResultados(modelo, maquina->getNombre());
 
-		// Redibujar el gráfico
-		Graphics^ g = pictureBoxGrafico->CreateGraphics();
-		g->SmoothingMode = System::Drawing::Drawing2D::SmoothingMode::AntiAlias;
-		g->Clear(Color::White);
-
-		DibujarEjes(g);
-		DibujarSigmoide(g, modelo);
-
-		// Mostrar información adicional
-		String^ info = String::Format(
-			"Máquina: {0}\nPuntos calculados: {1}\nRendimiento máximo: {2:F1}%\nRango X: 0-{3:F1}h",
-			maquinaSeleccionada, modelo->ObtenerCantidadPuntos(),
-			modelo->ObtenerRendimientoMaximo(), xMax);
-
-		MessageBox::Show(info, "Gráfico Generado", MessageBoxButtons::OK, MessageBoxIcon::Information);
-
-	}
-	catch (FormatException^) {
-		MessageBox::Show("Por favor ingrese valores numéricos válidos para k y x₀.",
-			"Error de Formato", MessageBoxButtons::OK, MessageBoxIcon::Error);
 	}
 	catch (Exception^ ex) {
-		MessageBox::Show("Error al generar el gráfico: " + ex->Message,
-			"Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+		ValidationHelper::MostrarErrorFormato("los parámetros");
 	}
 }
 private: System::Void buttonLimpiar_Click(System::Object^ sender, System::EventArgs^ e) {
-	// Limpiar el gráfico
 	Graphics^ g = pictureBoxGrafico->CreateGraphics();
-	g->Clear(Color::White);
-	DibujarEjes(g);
-
-	// Restablecer valores por defecto
-	textBoxK->Text = "0.1";
-	textBoxX0->Text = "50.0";
-
-	MessageBox::Show("Gráfico limpiado correctamente.",
-		"Limpiar", MessageBoxButtons::OK, MessageBoxIcon::Information);
+	GraphicsHelper::LimpiarGrafico(g, pictureBoxGrafico);
+	RestablecerValoresPorDefecto();
+	ValidationHelper::MostrarExito("Gráfico limpiado correctamente.");
 }
 private: System::Void buttonExportar_Click(System::Object^ sender, System::EventArgs^ e) {
 	try {
+		if (!ValidarEntrada()) return;
+
 		double k = Double::Parse(textBoxK->Text);
 		double x0 = Double::Parse(textBoxX0->Text);
-		if (k <= 0 || x0 <= 0) {
-			MessageBox::Show("Los valores de k y x₀ deben ser mayores que cero.",
-				"Error de Validación", MessageBoxButtons::OK, MessageBoxIcon::Warning);
-			return;
+		Maquina^ maquina = safe_cast<Maquina^>(comboBoxMaquinas->SelectedItem);
+
+		RendimientoSigmoide^ modelo = GenerarModeloSigmoide(k, x0);
+		String^ contenido = ExportHelper::ExportarRendimientoCSV(modelo, maquina->getNombre(), k, x0);
+
+		if (ExportHelper::GuardarArchivo(contenido, "Archivos CSV (*.csv)|*.csv",
+			"Exportar Datos", "Rendimiento_Sigmoide_" + maquina->getNombre()->Replace(" ", "_"))) {
+			ValidationHelper::MostrarExito("Datos exportados correctamente.");
 		}
 
-		if (this->comboBoxMaquinas->SelectedItem == nullptr) {
-			MessageBox::Show("Debe seleccionar una Máquina.",
-				"Error de Validación", MessageBoxButtons::OK, MessageBoxIcon::Warning);
-			return;
-		}
-
-		Maquina^ maquina = dynamic_cast<Maquina^>(comboBoxMaquinas->SelectedItem);
-		int idMaquina = maquina->getIdMaquina();
-		String^ maquinaSeleccionada = maquina->getNombre();
-
-		// Crear y configurar el modelo sigmoide
-		RendimientoSigmoide^ modelo = this->rendimientoController->CrearModeloPersonalizado(k, x0);
-		modelo->GenerarPuntos(0, 100, 1.0);
-
-		// Crear contenido CSV/Excel básico
-		String^ contenido = GenerarContenidoExcel(modelo, maquinaSeleccionada, k, x0);
-
-		// Diálogo para guardar
-		SaveFileDialog^ saveDialog = gcnew SaveFileDialog();
-		saveDialog->Filter = "Archivos CSV (*.csv)|*.csv";
-		saveDialog->Title = "Exportar Datos de Rendimiento";
-		saveDialog->FileName = "Rendimiento_Sigmoide_" + maquinaSeleccionada->Replace(" ", "_");
-
-		if (saveDialog->ShowDialog() == System::Windows::Forms::DialogResult::OK) {
-			System::IO::File::WriteAllText(saveDialog->FileName, contenido, System::Text::Encoding::UTF8);
-
-			MessageBox::Show("Datos exportados correctamente a:\n" + saveDialog->FileName +
-				"\n\nEl archivo incluye:\n- Parámetros del modelo\n- Tabla de datos completa",
-				"Exportación Exitosa", MessageBoxButtons::OK, MessageBoxIcon::Information);
-		}
 	}
 	catch (Exception^ ex) {
-		MessageBox::Show("Error al exportar datos: " + ex->Message,
-			"Error de Exportación", MessageBoxButtons::OK, MessageBoxIcon::Error);
+		ValidationHelper::MostrarErrorValidacion("Error al exportar: " + ex->Message);
 	}
 }
 
-	   // Función auxiliar para generar contenido
-	   String^ FormGraficosRendimiento::GenerarContenidoExcel(RendimientoSigmoide^ modelo, String^ maquina, double k, double x0) {
-		   System::Text::StringBuilder^ sb = gcnew System::Text::StringBuilder();
+	   // Métodos auxiliares privados
+private:
+	bool ValidarEntrada() {
+		double k, x0;
+		return ValidationHelper::TryParseDouble(textBoxK->Text, k) &&
+			ValidationHelper::TryParseDouble(textBoxX0->Text, x0) &&
+			ValidationHelper::ValidarParametrosSigmoide(k, x0) &&
+			ValidationHelper::ValidarSeleccionMaquina(comboBoxMaquinas);
+	}
 
-		   // Encabezado
-		   sb->AppendLine("Reporte de Rendimiento Sigmoide");
-		   sb->AppendLine("===============================");
-		   sb->AppendLine("Máquina: " + maquina);
-		   sb->AppendLine("Tasa de Crecimiento (k): " + k.ToString("F3"));
-		   sb->AppendLine("Punto de Inflexión (x₀): " + x0.ToString("F1"));
-		   sb->AppendLine();
+	RendimientoSigmoide^ GenerarModeloSigmoide(double k, double x0) {
+		RendimientoSigmoide^ modelo = this->rendimientoController->CrearModeloPersonalizado(k, x0);
+		double xMax = Math::Max(100.0, x0 * 2.5);
+		modelo->GenerarPuntos(0, xMax, xMax / 100.0);
+		return modelo;
+	}
 
-		   // Encabezados de tabla
-		   sb->AppendLine("Hora Operativa,Rendimiento (%),Estado");
+	void DibujarGrafico(RendimientoSigmoide^ modelo) {
+		Graphics^ g = pictureBoxGrafico->CreateGraphics();
+		g->SmoothingMode = SmoothingMode::AntiAlias;
+		g->Clear(Color::White);
+		GraphicsHelper::DibujarEjes(g, pictureBoxGrafico);
+		GraphicsHelper::DibujarSigmoide(g, pictureBoxGrafico, modelo);
+	}
 
-		   // Datos
-		   List<PuntoRendimiento^>^ puntos = modelo->getPuntos();
-		   for each (PuntoRendimiento ^ punto in puntos) {
-			   double rendimiento = punto->getY();
-			   String^ estado = ClasificarRendimiento(rendimiento);
+	void MostrarResultados(RendimientoSigmoide^ modelo, String^ nombreMaquina) {
+		String^ info = String::Format(
+			"Máquina: {0}\nPuntos calculados: {1}\nRendimiento máximo: {2:F1}%",
+			nombreMaquina, modelo->ObtenerCantidadPuntos(), modelo->ObtenerRendimientoMaximo());
+		ValidationHelper::MostrarExito(info);
+	}
 
-			   sb->AppendLine(
-				   punto->getX().ToString("F1") + "," +
-				   punto->getY().ToString("F2") + "," +
-				   estado
-			   );
-		   }
-
-		   return sb->ToString();
-	   }
-
-	   String^ FormGraficosRendimiento::ClasificarRendimiento(double rendimiento) {
-		   if (rendimiento < 20) return "Muy Bajo";
-		   else if (rendimiento < 40) return "Bajo";
-		   else if (rendimiento < 60) return "Moderado";
-		   else if (rendimiento < 80) return "Alto";
-		   else return "Muy Alto";
-	   }
+	void RestablecerValoresPorDefecto() {
+		textBoxK->Text = "0.1";
+		textBoxX0->Text = "50.0";
+	}
 
 	};
 }

@@ -121,6 +121,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ExportHelper.cpp" />
     <ClCompile Include="FormGraficosRendimiento.cpp" />
     <ClCompile Include="frmEditarMaquina.cpp" />
     <ClCompile Include="frmEditarOperador.cpp" />
@@ -132,9 +133,12 @@
     <ClCompile Include="frmNuevoOperador.cpp" />
     <ClCompile Include="frmPrincipal.cpp" />
     <ClCompile Include="frmVerDatosMantenimiento.cpp" />
+    <ClCompile Include="GraphicsHelper.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ValidationHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ExportHelper.h" />
     <ClInclude Include="FormGraficosRendimiento.h">
       <FileType>CppForm</FileType>
     </ClInclude>
@@ -168,6 +172,8 @@
     <ClInclude Include="frmVerDatosMantenimiento.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="GraphicsHelper.h" />
+    <ClInclude Include="ValidationHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

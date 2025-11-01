@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Archivos de encabezado\Helper">
+      <UniqueIdentifier>{1b00a5e7-6821-40b4-be73-ffd189442af1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archivos de origen\Helper">
+      <UniqueIdentifier>{aba40ee6-8596-44d3-af7c-064f19ccf955}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -51,6 +57,15 @@
     <ClCompile Include="FormGraficosRendimiento.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsHelper.cpp">
+      <Filter>Archivos de origen\Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="ExportHelper.cpp">
+      <Filter>Archivos de origen\Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="ValidationHelper.cpp">
+      <Filter>Archivos de origen\Helper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="frmLogin.h">
@@ -85,6 +100,15 @@
     </ClInclude>
     <ClInclude Include="FormGraficosRendimiento.h">
       <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsHelper.h">
+      <Filter>Archivos de encabezado\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="ExportHelper.h">
+      <Filter>Archivos de encabezado\Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="ValidationHelper.h">
+      <Filter>Archivos de encabezado\Helper</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
